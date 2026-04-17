@@ -5,7 +5,14 @@ from google.genai import types
 import argparse
 
 from prompts import system_prompt
+#import functions schemas
+# TODO: move schemas to a separate file
 from functions.get_files_info import schema_get_files_info
+from functions.get_file_content import schema_get_file_content
+from functions.write_file import schema_write_file
+from functions.run_python_file import schema_run_python_file
+#import function call
+from call_function import call_function
 
 def main():
 
@@ -22,7 +29,7 @@ def main():
 
     client = genai.Client(api_key=api_key)
     available_functions = types.Tool(
-            function_declarations=[schema_get_files_info],
+            function_declarations=[schema_get_files_info, schema_get_file_content, schema_write_file, schema_run_python_file],
             )
     
 
