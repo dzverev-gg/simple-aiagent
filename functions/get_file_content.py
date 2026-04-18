@@ -9,6 +9,8 @@ def get_file_content(working_directory, file_path):
         valid_target_file = os.path.commonpath([working_directory_abs, target_file]) == working_directory_abs
 
         
+        print("Func work dir; ", working_directory)
+        print("Func call file_path:", file_path)
         if not valid_target_file:
             return f'Error: Cannot read "{file_path}" as it is outside the permitted working directory'
         if not os.path.isfile(target_file):

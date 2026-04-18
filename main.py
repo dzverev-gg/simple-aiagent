@@ -56,10 +56,20 @@ def main():
         print(f"Prompt tokens: {prompt_tokens}")
         print(f"Response tokens: {response_tokens}")
 
+    function_results = []
     if response.function_calls is not None:
         for function_call in response.function_calls:
-            print(f"Calling function: {function_call.name}({function_call.args})")
-    
+            function_call_result = call_function(function_call, args.verbose)
+            if len(function_call_result.parts) == 0:
+                raise Exception("Incorrect function result")
+            if function_call_result.parts[0].function_response is None:
+                raise Exception("Empty function result paramenter")
+            if function_call_result.parts[0].function_response.response is None:
+                raise Exception("Empty function call result")
+            function_results.append(function_call_result.parts[0])
+            if args.verbose:
+                print(f"-> {function_call_result.parts[0].function_response.response}")
+
     print("Response:")
     print(response.text)
 
