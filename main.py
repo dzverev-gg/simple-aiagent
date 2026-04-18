@@ -1,4 +1,5 @@
 import os
+import sys
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -34,44 +35,55 @@ def main():
     
 
     messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
-    response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=messages,
-            config=types.GenerateContentConfig(system_instruction=system_prompt,
-                                               tools=[available_functions]),
-            )
-    
+    for _ in range(20):
+        response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=messages,
+                config=types.GenerateContentConfig(system_instruction=system_prompt,temperature=0,
+                                                   tools=[available_functions]),
+                )
+        if len(response.candidates) != 0:
+            for candidate in response.candidates:
+                print("message append candidate: ", candidate)
+                print("messages.content type: ", type(messages))
+                print("Messages_content content: ", messages)
+                messages.append(candidate.content)
 
-    if response.usage_metadata is None:
-        raise RuntimeError('empty usage data')
+        if response.usage_metadata is None:
+            raise RuntimeError('empty usage data')
 
 
 
-    prompt_tokens = response.usage_metadata.prompt_token_count
-    response_tokens = response.usage_metadata.candidates_token_count
+        prompt_tokens = response.usage_metadata.prompt_token_count
+        response_tokens = response.usage_metadata.candidates_token_count
 
 
-    if args.verbose:
-        print(f"User prompt: {messages}")
-        print(f"Prompt tokens: {prompt_tokens}")
-        print(f"Response tokens: {response_tokens}")
+        if args.verbose:
+            print(f"User prompt: {messages}")
+            print(f"Prompt tokens: {prompt_tokens}")
+            print(f"Response tokens: {response_tokens}")
 
-    function_results = []
-    if response.function_calls is not None:
-        for function_call in response.function_calls:
-            function_call_result = call_function(function_call, args.verbose)
-            if len(function_call_result.parts) == 0:
-                raise Exception("Incorrect function result")
-            if function_call_result.parts[0].function_response is None:
-                raise Exception("Empty function result paramenter")
-            if function_call_result.parts[0].function_response.response is None:
-                raise Exception("Empty function call result")
-            function_results.append(function_call_result.parts[0])
-            if args.verbose:
-                print(f"-> {function_call_result.parts[0].function_response.response}")
+        function_responses = []
+        if response.function_calls is not None:
+            for function_call in response.function_calls:
+                function_call_result = call_function(function_call, args.verbose)
+                if len(function_call_result.parts) == 0:
+                    raise Exception("Incorrect function result")
+                if function_call_result.parts[0].function_response is None:
+                    raise Exception("Empty function result paramenter")
+                if function_call_result.parts[0].function_response.response is None:
+                    raise Exception("Empty function call result")
+                if args.verbose:
+                    print(f"-> {function_call_result.parts[0].function_response.response}")
+                function_responses.append(function_call_result.parts[0])
+            messages.append(types.Content(role="user", parts=function_responses))
+        else:
+            print("Response:")
+            print(response.text)
+            return 0
+    print("Agent was not able to complete task in set amount of cycles")
+    sys.exit(1)
 
-    print("Response:")
-    print(response.text)
 
 
 if __name__ == "__main__":

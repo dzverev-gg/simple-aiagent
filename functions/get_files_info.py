@@ -18,8 +18,7 @@ def get_files_info(working_directory, directory="."):
         for file in os.listdir(target_dir):
             file_path = os.path.normpath(os.path.join(target_dir, file))
             file_list.append(f"- {file}: file_size={os.path.getsize(file_path)} bytes, is_dir={os.path.isdir(file_path)}")
-        
-        return "\n".join(file_list)
+        return str("\n".join(file_list))
     except Exception as e:
         return f"Error: {e}"
 
